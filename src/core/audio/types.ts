@@ -5,32 +5,65 @@
  */
 
 /**
- * Estados del ondas cerebrales según frecuencia (Hz)
- * Basado en investigación psicoacústica
+ * Estados de ondas cerebrales
  */
 export const BrainwaveState = {
-  DELTA: 'delta',       // 0.5-4 Hz  - Sueño profundo
-  THETA: 'theta',       // 4-8 Hz    - Meditación profunda, creatividad
-  ALPHA: 'alpha',       // 8-14 Hz   - Relajación, estado pre-sueño
-  BETA: 'beta',         // 14-30 Hz  - Concentración, alerta
-  GAMMA: 'gamma',       // 30-100 Hz - Procesamiento cognitivo alto
+  DELTA: 'delta',
+  THETA: 'theta',
+  ALPHA: 'alpha',
+  BETA: 'beta',
+  GAMMA: 'gamma',
 } as const;
-
 export type BrainwaveState = typeof BrainwaveState[keyof typeof BrainwaveState];
 
 /**
- * Configuración de frecuencias para cada estado cerebral
+ * Estado de reproducción del motor de audio
  */
+export const PlaybackState = {
+  IDLE: 'idle',
+  PLAYING: 'playing',
+  PAUSED: 'paused',
+  STOPPING: 'stopping',
+} as const;
+export type PlaybackState = typeof PlaybackState[keyof typeof PlaybackState];
+
+/**
+ * Códigos de error
+ */
+export const ErrorCode = {
+  INVALID_FREQUENCY: 'INVALID_FREQUENCY',
+  INVALID_VOLUME: 'INVALID_VOLUME',
+  CONTEXT_NOT_INITIALIZED: 'CONTEXT_NOT_INITIALIZED',
+  PLAYBACK_ERROR: 'PLAYBACK_ERROR',
+  BROWSER_NOT_SUPPORTED: 'BROWSER_NOT_SUPPORTED',
+  FILE_LOAD_ERROR: 'FILE_LOAD_ERROR',
+} as const;
+export type ErrorCode = typeof ErrorCode[keyof typeof ErrorCode];
+
+/**
+ * Errores personalizados
+ */
+export class AudioEngineError extends Error {
+  public code: string;
+  public details?: any;
+
+  constructor(message: string, code: string, details?: any) {
+    super(message);
+    this.name = 'AudioEngineError';
+    this.code = code;
+    this.details = details;
+  }
+}
+
+// --- Interfaces de Configuración ---
+
 export interface BrainwaveConfig {
   state: BrainwaveState;
-  beatFrequency: number;      // Frecuencia del pulso binaural (Hz)
-  carrierFrequency: number;   // Frecuencia portadora (Hz)
+  beatFrequency: number;
+  carrierFrequency: number;
   description: string;
 }
 
-/**
- * Presets predefinidos para diferentes estados mentales
- */
 export const BRAINWAVE_PRESETS: Record<BrainwaveState, BrainwaveConfig> = {
   [BrainwaveState.DELTA]: {
     state: BrainwaveState.DELTA,
@@ -64,82 +97,43 @@ export const BRAINWAVE_PRESETS: Record<BrainwaveState, BrainwaveConfig> = {
   },
 };
 
-/**
- * Tipos de ondas disponibles para osciladores
- */
 export type OscillatorType = 'sine' | 'square' | 'sawtooth' | 'triangle';
 
-/**
- * Rango de frecuencias válidas
- */
 export interface FrequencyRange {
   min: number;
   max: number;
 }
 
-/**
- * Constantes de validación de frecuencias
- */
 export const FREQUENCY_LIMITS = {
   CARRIER: { min: 200, max: 1000 } as FrequencyRange,
   BEAT: { min: 0.5, max: 100 } as FrequencyRange,
   ISOCHRONIC: { min: 0.5, max: 40 } as FrequencyRange,
-  SUBLIMINAL_CARRIER: 17500, // 17.5 kHz para mensajes subliminales
+  SUBLIMINAL_CARRIER: 17500,
 };
 
-/**
- * Parámetros de volumen en diferentes escalas
- */
 export interface VolumeParams {
-  linear: number;    // 0.0 - 1.0
-  decibels: number;  // -∞ a 0 dB
-  percentage: number; // 0 - 100%
+  linear: number;
+  decibels: number;
+  percentage: number;
 }
 
-/**
- * Configuración de fade (entrada/salida gradual)
- */
 export interface FadeConfig {
-  duration: number;  // Duración en segundos
+  duration: number;
   type: 'linear' | 'exponential';
 }
 
-/**
- * Estado de reproducción del motor de audio
- */
-export const PlaybackState = {
-  IDLE: 'idle',
-  PLAYING: 'playing',
-  PAUSED: 'paused',
-  STOPPING: 'stopping',
-} as const;
-export type PlaybackState = typeof PlaybackState[keyof typeof PlaybackState];
+// --- Nuevos tipos de Claude para SilentEngine v2.0 ---
 
-/**
- * Errores personalizados para el motor de audio
- */
-export class AudioEngineError extends Error {
-  // Declaramos las propiedades fuera
-  public code: string;
-  public details?: any;
-
-  constructor(message: string, code: string, details?: any) {
-    super(message);
-    this.name = 'AudioEngineError';
-    // Asignamos manualmente los valores
-    this.code = code;
-    this.details = details;
-  }
+export interface AMModulationConfig {
+  carrierFrequency: number;
+  lfoFrequency: number;
+  lfoDepth: number; // 0.0 - 1.0
+  messageGain: number; // Volumen del audio cargado
 }
 
-/**
- * Códigos de error
- */
-export const ErrorCode = {
-  INVALID_FREQUENCY: 'INVALID_FREQUENCY',
-  INVALID_VOLUME: 'INVALID_VOLUME',
-  CONTEXT_NOT_INITIALIZED: 'CONTEXT_NOT_INITIALIZED',
-  PLAYBACK_ERROR: 'PLAYBACK_ERROR',
-  BROWSER_NOT_SUPPORTED: 'BROWSER_NOT_SUPPORTED',
-} as const;
-export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
+export interface AudioFileInfo {
+  name: string;
+  duration: number;
+  sampleRate: number;
+  channels: number;
+}
