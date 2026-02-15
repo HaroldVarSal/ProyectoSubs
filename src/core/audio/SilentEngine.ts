@@ -1,26 +1,21 @@
 /**
  * ═══════════════════════════════════════════════════════════════
- * MOTOR SUBLIMINAL SILENCIOSO (SILENT ENGINE) - VERSIÓN MEJORADA
+ * MOTOR SUBLIMINAL SILENCIOSO (SILENT ENGINE) - VERSIÓN ESTRICTA
  * ═══════════════════════════════════════════════════════════════
  * 
- * Este motor genera una frecuencia portadora ultrasónica (17.5 kHz)
- * diseñada para estar en el límite de la audición humana consciente.
+ * Compatibilidad con TypeScript estricto (Vite 8):
+ * ✅ Sin enums (usa objetos constantes)
+ * ✅ Sin parámetros de propiedad en constructores
+ * ✅ Imports de tipo explícitos con 'type'
+ * ✅ Higiene espectral: Portadora 17.5 kHz + LFO anti-habituación
  * 
  * CARACTERÍSTICAS:
  * ✅ Portadora Ultrasónica: 17,500 Hz (Inaudible conscientemente)
  * ✅ Modulación LFO: Oscilación lenta para evitar habituación neural
- * ✅ Modulación de Amplitud (AM): Monta mensajes de voz sobre la portadora
+ * ✅ Modulación de Amplitud (AM): Monta mensajes de voz sobre portadora
  * ✅ Carga de archivos externos: MP3, WAV, OGG
  * ✅ Control independiente de volumen portadora/mensaje
  * ✅ Integración con AudioMixer
- * 
- * MEJORAS IMPLEMENTADAS:
- * ✓ Sistema completo de modulación AM
- * ✓ Carga asíncrona de archivos de audio
- * ✓ Gestión eficiente de memoria (AudioBuffer pool)
- * ✓ Soporte para AudioContext compartido
- * ✓ Validación de archivos de audio
- * ✓ Fade in/out mejorado
  * 
  * @version 2.0
  */
@@ -47,59 +42,78 @@ import {
  */
 export class SilentEngine {
   // ═══════════════════════════════════════════════════════════════
-  // 1. VARIABLES PRIVADAS
+  // 1. VARIABLES PRIVADAS (Declaradas arriba, no en constructor)
   // ═══════════════════════════════════════════════════════════════
 
-  private context: AudioContext | null = null;
-  private externalContext: boolean = false; // Si usa contexto compartido
+  private context: AudioContext | null;
+  private externalContext: boolean;
 
   /**
    * NODOS DE LA PORTADORA ULTRASÓNICA
    */
-  private carrierOscillator: OscillatorNode | null = null;
-  private carrierGain: GainNode | null = null;
+  private carrierOscillator: OscillatorNode | null;
+  private carrierGain: GainNode | null;
 
   /**
    * NODOS DEL LFO (ANTI-HABITUACIÓN)
    */
-  private lfoOscillator: OscillatorNode | null = null;
-  private lfoGain: GainNode | null = null;
+  private lfoOscillator: OscillatorNode | null;
+  private lfoGain: GainNode | null;
 
   /**
    * NODOS DE MODULACIÓN AM
    */
-  private messageSource: AudioBufferSourceNode | null = null;
-  private messageGain: GainNode | null = null;
-  private modulatorGain: GainNode | null = null;
+  private messageSource: AudioBufferSourceNode | null;
+  private messageGain: GainNode | null;
+  private modulatorGain: GainNode | null;
 
   /**
    * NODO MAESTRO
    */
-  private masterGain: GainNode | null = null;
+  private masterGain: GainNode | null;
 
   /**
    * BUFFER DEL MENSAJE DE AUDIO
    */
-  private audioBuffer: AudioBuffer | null = null;
-  private audioFileInfo: AudioFileInfo | null = null;
+  private audioBuffer: AudioBuffer | null;
+  private audioFileInfo: AudioFileInfo | null;
 
   /**
    * ESTADO
    */
-  private state: PlaybackState = PlaybackState.IDLE;
-  private currentLFOFreq: number = 0.5;
-  private isModulated: boolean = false; // Si tiene mensaje AM activo
+  private state: PlaybackState;
+  private currentLFOFreq: number;
+  private isModulated: boolean;
 
   /**
    * CONEXIÓN AL MIXER
    */
-  private outputNode: GainNode | null = null; // Nodo de salida para el mixer
+  private outputNode: GainNode | null;
 
   // ═══════════════════════════════════════════════════════════════
-  // 2. CONSTRUCTOR
+  // 2. CONSTRUCTOR (Sin parámetros de propiedad)
   // ═══════════════════════════════════════════════════════════════
 
   constructor(sharedContext?: AudioContext) {
+    // Inicializar todas las propiedades explícitamente
+    this.context = null;
+    this.externalContext = false;
+    this.carrierOscillator = null;
+    this.carrierGain = null;
+    this.lfoOscillator = null;
+    this.lfoGain = null;
+    this.messageSource = null;
+    this.messageGain = null;
+    this.modulatorGain = null;
+    this.masterGain = null;
+    this.audioBuffer = null;
+    this.audioFileInfo = null;
+    this.state = PlaybackState.IDLE;
+    this.currentLFOFreq = 0.5;
+    this.isModulated = false;
+    this.outputNode = null;
+
+    // Asignar contexto compartido si se proporciona
     if (sharedContext) {
       this.context = sharedContext;
       this.externalContext = true;
@@ -159,7 +173,7 @@ export class SilentEngine {
       this.log('AudioContext de Alta Frecuencia iniciado', {
         sampleRate: this.context.sampleRate,
         state: this.context.state,
-        maxFrequency: this.context.sampleRate / 2, // Nyquist
+        maxFrequency: this.context.sampleRate / 2,
       });
 
     } catch (error) {
@@ -200,13 +214,6 @@ export class SilentEngine {
 
   /**
    * Carga un archivo de audio para modular sobre la portadora
-   * 
-   * @param file - Archivo de audio (File o Blob)
-   * @returns Información del archivo cargado
-   * 
-   * @example
-   * const fileInfo = await engine.loadAudioFile(fileInput.files[0]);
-   * console.log(`Duración: ${fileInfo.duration}s`);
    */
   public async loadAudioFile(file: File | Blob): Promise<AudioFileInfo> {
     if (!this.context) await this.init();
@@ -220,13 +227,9 @@ export class SilentEngine {
     try {
       this.log('Cargando archivo de audio...', { name: (file as File).name, size: file.size });
 
-      // Leer el archivo como ArrayBuffer
       const arrayBuffer = await file.arrayBuffer();
-
-      // Decodificar el audio
       this.audioBuffer = await this.context.decodeAudioData(arrayBuffer);
 
-      // Guardar información del archivo
       this.audioFileInfo = {
         name: (file as File).name || 'audio',
         duration: this.audioBuffer.duration,
@@ -237,7 +240,6 @@ export class SilentEngine {
       };
 
       this.log('Archivo cargado exitosamente', this.audioFileInfo);
-
       return this.audioFileInfo;
 
     } catch (error) {
@@ -264,7 +266,6 @@ export class SilentEngine {
     try {
       this.log('Cargando audio desde URL...', { url });
 
-      // Fetch el archivo
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -273,7 +274,6 @@ export class SilentEngine {
       const arrayBuffer = await response.arrayBuffer();
       this.audioBuffer = await this.context.decodeAudioData(arrayBuffer);
 
-      // Extraer nombre del archivo de la URL
       const fileName = url.split('/').pop() || 'audio';
 
       this.audioFileInfo = {
@@ -286,7 +286,6 @@ export class SilentEngine {
       };
 
       this.log('Audio cargado desde URL', this.audioFileInfo);
-
       return this.audioFileInfo;
 
     } catch (error) {
@@ -307,7 +306,7 @@ export class SilentEngine {
   }
 
   /**
-   * Descarga el AudioBuffer actual (útil para debug)
+   * Obtiene información del AudioBuffer actual
    */
   public getLoadedAudioInfo(): AudioFileInfo | null {
     return this.audioFileInfo;
@@ -330,11 +329,10 @@ export class SilentEngine {
    * Reproduce solo la portadora ultrasónica con LFO
    * (Sin modulación AM - modo simple)
    * 
-   * @param lfoFrequency - Frecuencia del LFO en Hz (default: 0.5)
-   * 
-   * @example
-   * // Portadora con oscilación cada 2 segundos
-   * await engine.play(0.5);
+   * HIGIENE ESPECTRAL:
+   * - Portadora: 17,500 Hz (límite audición consciente)
+   * - LFO: 0.1-3 Hz (evita habituación neural)
+   * - Modulación de frecuencia: ±5 Hz
    */
   public async play(lfoFrequency: number = 0.5): Promise<void> {
     try {
@@ -362,7 +360,6 @@ export class SilentEngine {
       this.carrierOscillator.type = 'sine';
       this.carrierOscillator.frequency.value = FREQUENCY_LIMITS.SUBLIMINAL_CARRIER;
 
-      // Ganancia de la portadora
       this.carrierGain = this.context.createGain();
       this.carrierGain.gain.value = 1.0;
 
@@ -374,20 +371,16 @@ export class SilentEngine {
       this.lfoOscillator.type = 'sine';
       this.lfoOscillator.frequency.value = lfoFrequency;
 
-      // Ganancia del LFO (controla cuánto afecta)
       this.lfoGain = this.context.createGain();
-      // Modula +/- 5 Hz (de 17495 a 17505 Hz)
       this.lfoGain.gain.value = SUBLIMINAL_CONFIG.LFO_MAX || 5;
 
       // ─────────────────────────────────────────────────────────
-      // C. CONECTAR MODULACIÓN DE FRECUENCIA
+      // C. CONECTAR MODULACIÓN DE FRECUENCIA (LFO → Carrier)
       // ─────────────────────────────────────────────────────────
 
-      // LFO -> LFO Gain -> Carrier Frequency
       this.lfoOscillator.connect(this.lfoGain);
       this.lfoGain.connect(this.carrierOscillator.frequency);
 
-      // Carrier -> Carrier Gain -> Master
       this.carrierOscillator.connect(this.carrierGain);
       this.carrierGain.connect(this.masterGain);
 
@@ -441,25 +434,15 @@ export class SilentEngine {
    * Reproduce la portadora ultrasónica CON modulación AM
    * (Monta el mensaje de audio sobre la portadora)
    * 
-   * @param config - Configuración de modulación
-   * @param loop - Si el mensaje debe repetirse en loop
-   * 
-   * @example
-   * // Primero cargar un archivo
-   * await engine.loadAudioFile(file);
-   * 
-   * // Reproducir con modulación AM
-   * await engine.playWithAM({
-   *   modulationDepth: 0.8,
-   *   carrierFrequency: 17500,
-   *   messageGain: 0.5,
-   * }, true);
+   * HIGIENE ESPECTRAL + MODULACIÓN AM:
+   * - Portadora: 17,500 Hz modulada con mensaje
+   * - LFO: Variación adicional de frecuencia
+   * - Profundidad AM: Configurable 0-1
    */
   public async playWithAM(
     config: Partial<AMModulationConfig> = {},
     loop: boolean = false
   ): Promise<void> {
-    // Verificar que hay un AudioBuffer cargado
     if (!this.audioBuffer) {
       throw new AudioEngineError(
         'No hay archivo de audio cargado. Usa loadAudioFile() primero.',
@@ -484,7 +467,6 @@ export class SilentEngine {
 
       const now = this.context.currentTime;
 
-      // Configuración de modulación con defaults
       const amConfig: AMModulationConfig = {
         modulationDepth: config.modulationDepth ?? 1.0,
         carrierFrequency: config.carrierFrequency ?? FREQUENCY_LIMITS.SUBLIMINAL_CARRIER,
@@ -510,7 +492,6 @@ export class SilentEngine {
       this.messageSource.buffer = this.audioBuffer;
       this.messageSource.loop = loop;
 
-      // Ganancia del mensaje
       this.messageGain = this.context.createGain();
       this.messageGain.gain.value = amConfig.messageGain;
 
@@ -518,43 +499,37 @@ export class SilentEngine {
       // C. CREAR MODULADOR (AM)
       // ─────────────────────────────────────────────────────────
 
-      // El modulador controla la amplitud de la portadora
       this.modulatorGain = this.context.createGain();
-      // Valor base = 0.5 (punto medio)
       this.modulatorGain.gain.value = 0.5;
 
       // ─────────────────────────────────────────────────────────
       // D. CONECTAR CADENA DE MODULACIÓN AM
       // ─────────────────────────────────────────────────────────
 
-      // MENSAJE → Message Gain → Modulator Gain (controla amplitud)
       this.messageSource.connect(this.messageGain);
       
-      // Escalar el mensaje a la profundidad de modulación
       const scaledGain = this.context.createGain();
       scaledGain.gain.value = 0.5 * amConfig.modulationDepth;
       
       this.messageGain.connect(scaledGain);
       scaledGain.connect(this.modulatorGain.gain);
 
-      // PORTADORA → Carrier Gain → Modulator → Master
       this.carrierOscillator.connect(this.carrierGain);
       this.carrierGain.connect(this.modulatorGain);
       this.modulatorGain.connect(this.masterGain);
 
       // ─────────────────────────────────────────────────────────
-      // E. GENERAR LFO (OPCIONAL - para variación adicional)
+      // E. GENERAR LFO (OPCIONAL - variación adicional)
       // ─────────────────────────────────────────────────────────
 
-      const lfoFreq = config.carrierFrequency ? 0.3 : 0.5;
+      const lfoFreq = 0.3;
       this.lfoOscillator = this.context.createOscillator();
       this.lfoOscillator.type = 'sine';
       this.lfoOscillator.frequency.value = lfoFreq;
 
       this.lfoGain = this.context.createGain();
-      this.lfoGain.gain.value = 3; // Modulación más sutil con AM
+      this.lfoGain.gain.value = 3;
 
-      // LFO → Carrier Frequency (pequeña variación)
       this.lfoOscillator.connect(this.lfoGain);
       this.lfoGain.connect(this.carrierOscillator.frequency);
 
@@ -576,9 +551,7 @@ export class SilentEngine {
       this.lfoOscillator.start(now);
       this.messageSource.start(now);
 
-      // Si no está en loop, detener automáticamente al final
       if (!loop) {
-        const duration = this.audioBuffer.duration;
         this.messageSource.onended = () => {
           this.log('Mensaje completado, deteniendo...');
           this.stop();
@@ -617,9 +590,6 @@ export class SilentEngine {
   // 7. DETENER REPRODUCCIÓN
   // ═══════════════════════════════════════════════════════════════
 
-  /**
-   * Detiene la reproducción con fade out
-   */
   public async stop(): Promise<void> {
     if (this.state !== PlaybackState.PLAYING) return;
 
@@ -631,18 +601,14 @@ export class SilentEngine {
       const now = this.context.currentTime;
       const fadeOutDuration = SUBLIMINAL_CONFIG.FADE_OUT.duration;
 
-      // Fade out
       const currentVolume = this.masterGain.gain.value;
       this.masterGain.gain.setValueAtTime(currentVolume, now);
       this.masterGain.gain.linearRampToValueAtTime(0, now + fadeOutDuration);
 
-      // Esperar fade out
       await this.delay((fadeOutDuration * 1000) + 50);
 
-      // Detener y limpiar todos los nodos
       this.stopAndDisconnectNodes();
 
-      // Restaurar volumen
       if (this.masterGain && this.context) {
         this.masterGain.gain.setValueAtTime(
           SUBLIMINAL_CONFIG.MESSAGE_VOLUME,
@@ -659,16 +625,9 @@ export class SilentEngine {
     }
   }
 
-  /**
-   * Detiene y desconecta todos los nodos
-   */
   private stopAndDisconnectNodes(): void {
-    // Carrier
     if (this.carrierOscillator) {
-      try {
-        this.carrierOscillator.stop();
-        this.carrierOscillator.disconnect();
-      } catch (e) {}
+      try { this.carrierOscillator.stop(); this.carrierOscillator.disconnect(); } catch (e) {}
       this.carrierOscillator = null;
     }
 
@@ -677,12 +636,8 @@ export class SilentEngine {
       this.carrierGain = null;
     }
 
-    // LFO
     if (this.lfoOscillator) {
-      try {
-        this.lfoOscillator.stop();
-        this.lfoOscillator.disconnect();
-      } catch (e) {}
+      try { this.lfoOscillator.stop(); this.lfoOscillator.disconnect(); } catch (e) {}
       this.lfoOscillator = null;
     }
 
@@ -691,12 +646,8 @@ export class SilentEngine {
       this.lfoGain = null;
     }
 
-    // Message
     if (this.messageSource) {
-      try {
-        this.messageSource.stop();
-        this.messageSource.disconnect();
-      } catch (e) {}
+      try { this.messageSource.stop(); this.messageSource.disconnect(); } catch (e) {}
       this.messageSource = null;
     }
 
@@ -705,7 +656,6 @@ export class SilentEngine {
       this.messageGain = null;
     }
 
-    // Modulator
     if (this.modulatorGain) {
       this.modulatorGain.disconnect();
       this.modulatorGain = null;
@@ -716,9 +666,6 @@ export class SilentEngine {
   // 8. CONTROL DE VOLUMEN
   // ═══════════════════════════════════════════════════════════════
 
-  /**
-   * Ajusta el volumen maestro con percepción logarítmica
-   */
   public setVolume(percentage: number): void {
     if (!this.masterGain || !this.context) return;
 
@@ -732,17 +679,11 @@ export class SilentEngine {
     this.log('Volumen ajustado', { percentage: `${clamped}%` });
   }
 
-  /**
-   * Obtiene el volumen actual en porcentaje
-   */
   public getVolume(): number {
     if (!this.masterGain) return 0;
     return gainToPercentage(this.masterGain.gain.value);
   }
 
-  /**
-   * Ajusta la frecuencia del LFO en tiempo real
-   */
   public setLFOFrequency(frequency: number): void {
     if (!this.lfoOscillator || !this.context) return;
     if (this.state !== PlaybackState.PLAYING) return;
@@ -762,46 +703,28 @@ export class SilentEngine {
   // 9. GETTERS Y ESTADO
   // ═══════════════════════════════════════════════════════════════
 
-  /**
-   * Obtiene el estado actual
-   */
   public getState(): PlaybackState {
     return this.state;
   }
 
-  /**
-   * Verifica si está reproduciendo
-   */
   public isPlaying(): boolean {
     return this.state === PlaybackState.PLAYING;
   }
 
-  /**
-   * Verifica si tiene modulación AM activa
-   */
   public hasModulation(): boolean {
     return this.isModulated;
   }
 
-  /**
-   * Obtiene el nodo de salida (para conectar al mixer)
-   */
   public getOutputNode(): GainNode | null {
     return this.outputNode;
   }
 
-  /**
-   * Conecta la salida a un nodo destino
-   */
   public connectTo(destination: AudioNode): void {
     if (this.outputNode) {
       this.outputNode.connect(destination);
     }
   }
 
-  /**
-   * Desconecta la salida
-   */
   public disconnect(): void {
     if (this.outputNode) {
       this.outputNode.disconnect();
@@ -812,16 +735,11 @@ export class SilentEngine {
   // 10. LIMPIEZA Y DESTRUCCIÓN
   // ═══════════════════════════════════════════════════════════════
 
-  /**
-   * Libera todos los recursos
-   */
   public async dispose(): Promise<void> {
     await this.stop();
 
-    // Limpiar AudioBuffer
     this.clearAudioBuffer();
 
-    // Desconectar nodos base
     if (this.masterGain) {
       this.masterGain.disconnect();
       this.masterGain = null;
@@ -832,7 +750,6 @@ export class SilentEngine {
       this.outputNode = null;
     }
 
-    // Cerrar contexto solo si no es externo
     if (this.context && !this.externalContext) {
       await this.context.close();
       this.context = null;
@@ -846,16 +763,10 @@ export class SilentEngine {
   // 11. UTILIDADES
   // ═══════════════════════════════════════════════════════════════
 
-  /**
-   * Helper para delays
-   */
   private delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  /**
-   * Sistema de logging
-   */
   private log(message: string, data?: any, level: 'info' | 'error' = 'info'): void {
     if (!DEBUG_CONFIG.ENABLE_LOGGING) return;
 
