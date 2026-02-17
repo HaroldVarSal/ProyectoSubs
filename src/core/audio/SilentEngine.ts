@@ -715,6 +715,10 @@ export class SilentEngine {
     return this.isModulated;
   }
 
+  public getCurrentLFOFrequency(): number {
+    return this.currentLFOFreq;
+  }
+
   public getOutputNode(): GainNode | null {
     return this.outputNode;
   }

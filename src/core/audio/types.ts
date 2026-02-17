@@ -288,3 +288,94 @@ export interface AudioPerformanceMetrics {
   activeNodes: number;
   droppedFrames: number;
 }
+
+/**
+ * ═══════════════════════════════════════════════════════════════
+ * TIPOS PARA AUDIO MIXER
+ * ═══════════════════════════════════════════════════════════════
+ */
+
+/**
+ * Información de un motor conectado al mixer
+ */
+export interface ConnectedEngineInfo {
+  id: string;
+  type: string;
+  name: string;
+  gainNode: GainNode;
+  volume: number;
+  muted: boolean;
+  solo: boolean;
+}
+
+/**
+ * Estado del AudioContext
+ */
+export const AudioContextState = {
+  SUSPENDED: 'suspended',
+  RUNNING: 'running',
+  CLOSED: 'closed',
+  INTERRUPTED: 'interrupted',
+} as const;
+
+export type AudioContextState = typeof AudioContextState[keyof typeof AudioContextState];
+
+/**
+ * Configuración del analizador FFT
+ */
+export interface AnalyzerConfig {
+  fftSize: number;
+  smoothingTimeConstant: number;
+  minDecibels: number;
+  maxDecibels: number;
+}
+
+/**
+ * ═══════════════════════════════════════════════════════════════
+ * TIPOS PARA EL MOTOR SUPRALIMINAL DINÁMICO
+ * ═══════════════════════════════════════════════════════════════
+ */
+
+/**
+ * Configuración de filtro para una capa individual
+ */
+export interface SupraliminalFilterConfig {
+  type: BiquadFilterType;
+  frequency: number;
+  Q: number;
+  gain: number;
+}
+
+/**
+ * Configuración de fade para capas
+ */
+export interface SupraliminalFadeConfig {
+  fadeInDuration: number;
+  fadeOutDuration: number;
+  fadeType: 'linear' | 'exponential';
+}
+
+/**
+ * Configuración de una capa de audio individual
+ */
+export interface SupraliminalLayerConfig {
+  id: string;
+  name: string;
+  buffer: AudioBuffer;
+  playbackRate: number;
+  pan: number;
+  volume: number;
+  startTimeOffset: number;
+  enabled: boolean;
+  filter?: SupraliminalFilterConfig;
+  fade?: SupraliminalFadeConfig;
+}
+
+/**
+ * Estado para la UI
+ */
+export interface SupraliminalEngineState {
+  layers: SupraliminalLayerConfig[];
+  isPlaying: boolean;
+  masterVolume: number;
+}
