@@ -117,9 +117,8 @@ export class SilentEngine {
     if (sharedContext) {
       this.context = sharedContext;
       this.externalContext = true;
-      this.log('SilentEngine inicializado con AudioContext compartido');
-    } else {
-      this.log('SilentEngine inicializado. Listo para operar en el espectro ultrasónico.');
+      this.initializeNodes(); 
+      console.log('SilentEngine: Nodos inicializados con contexto compartido');
     }
   }
 

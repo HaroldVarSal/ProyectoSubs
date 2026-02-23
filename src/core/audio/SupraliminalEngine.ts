@@ -136,9 +136,8 @@ export class SupraliminalEngine {
     if (sharedContext) {
       this.context = sharedContext;
       this.externalContext = true;
-      this.log('Inicializado con contexto compartido');
-    } else {
-      this.log('Inicializado (contexto propio)');
+      this.initializeNodes();
+      console.log('SupraliminalEngine: Nodos inicializados con contexto compartido')
     }
   }
 
